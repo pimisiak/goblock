@@ -8,9 +8,10 @@ import (
 	"strconv"
 
 	"github.com/pimisiak/goblock/blockchain"
+	"github.com/pimisiak/goblock/utils"
 )
 
-type CommandLine struct {}
+type CommandLine struct{}
 
 func (cli *CommandLine) printUsage() {
 	fmt.Println("Usage:")
@@ -34,10 +35,10 @@ func (cli *CommandLine) printChain() {
 	for {
 		block := iter.Next()
 		fmt.Printf("Previous Hash: %x\n", block.PrevHash)
-    fmt.Printf("Hash: %x\n", block.Hash)
-    pow := blockchain.NewProof(block)
-  	fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
-  	fmt.Println()
+		fmt.Printf("Hash: %x\n", block.Hash)
+		pow := blockchain.NewProof(block)
+		fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
+		fmt.Println()
 
 		if len(block.PrevHash) == 0 {
 			break
@@ -89,16 +90,16 @@ func (cli *CommandLine) Run() {
 	switch os.Args[1] {
 	case "getbalance":
 		err := getBalanceCmd.Parse(os.Args[2:])
-		blockchain.Handle(err)
+		utils.Handle(err)
 	case "createblockchain":
 		err := createBlockchainCmd.Parse(os.Args[2:])
-		blockchain.Handle(err)
+		utils.Handle(err)
 	case "print":
 		err := printChainCmd.Parse(os.Args[2:])
-		blockchain.Handle(err)
+		utils.Handle(err)
 	case "send":
 		err := sendCmd.Parse(os.Args[2:])
-		blockchain.Handle(err)
+		utils.Handle(err)
 	default:
 		cli.printUsage()
 		runtime.Goexit()

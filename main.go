@@ -1,8 +1,8 @@
 package main
 
 import (
-	"os"
 	"github.com/pimisiak/goblock/cli"
+	"os"
 )
 
 func main() {
