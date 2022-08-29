@@ -9,16 +9,19 @@ import (
 
 	"github.com/pimisiak/goblock/blockchain"
 	"github.com/pimisiak/goblock/utils"
+	"github.com/pimisiak/goblock/wallet"
 )
 
 type CommandLine struct{}
 
 func (cli *CommandLine) printUsage() {
 	fmt.Println("Usage:")
-	fmt.Println(" getbalance -address ADDRESS -> get the balance for address")
+	fmt.Println(" getbalance -address ADDRESS -> gets the balance for address")
 	fmt.Println(" createblockchain -address ADDRESS -> creates a blockchain")
-	fmt.Println(" print -> print the blocks in the chain")
-	fmt.Println(" send -from FROM -to TO -amount AMOUNT -> send amount from one address to another")
+	fmt.Println(" print -> prints the blocks in the chain")
+	fmt.Println(" send -from FROM -to TO -amount AMOUNT -> sends amount from one address to another")
+	fmt.Println(" createwallet - creates a new wallet")
+	fmt.Println(" listaddresses - lists the addresses in wallet file")
 }
 
 func (cli *CommandLine) validateArgs() {
@@ -73,6 +76,21 @@ func (cli *CommandLine) send(from, to string, amount int) {
 	fmt.Println("Success!")
 }
 
+func (cli *CommandLine) createWallet() {
+	wallets, _ := wallet.CreateWallets()
+	address := wallets.AddWallet()
+	wallets.SaveFile()
+	fmt.Printf("New address is: %s\n", address)
+}
+
+func (cli *CommandLine) listAddresses() {
+	wallets, _ := wallet.CreateWallets()
+	addresses := wallets.GetAllAddresses()
+	for _, address := range addresses {
+		fmt.Println(address)
+	}
+}
+
 func (cli *CommandLine) Run() {
 	cli.validateArgs()
 
@@ -80,6 +98,8 @@ func (cli *CommandLine) Run() {
 	createBlockchainCmd := flag.NewFlagSet("createblockchain", flag.ExitOnError)
 	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
 	printChainCmd := flag.NewFlagSet("print", flag.ExitOnError)
+	createWalletCmd := flag.NewFlagSet("createwallet", flag.ExitOnError)
+	listAddressesCmd := flag.NewFlagSet("listaddresses", flag.ExitOnError)
 
 	getBalanceAddress := getBalanceCmd.String("address", "", "The address for which balance will be returned")
 	createBlockchainAddress := createBlockchainCmd.String("address", "", "The address that creates blockchain")
@@ -99,6 +119,12 @@ func (cli *CommandLine) Run() {
 		utils.Handle(err)
 	case "send":
 		err := sendCmd.Parse(os.Args[2:])
+		utils.Handle(err)
+	case "createwallet":
+		err := createWalletCmd.Parse(os.Args[2:])
+		utils.Handle(err)
+	case "listaddresses":
+		err := listAddressesCmd.Parse(os.Args[2:])
 		utils.Handle(err)
 	default:
 		cli.printUsage()
@@ -139,5 +165,13 @@ func (cli *CommandLine) Run() {
 			runtime.Goexit()
 		}
 		cli.send(*sendFrom, *sendTo, *sendAmount)
+	}
+
+	if createWalletCmd.Parsed() {
+		cli.createWallet()
+	}
+
+	if listAddressesCmd.Parsed() {
+		cli.listAddresses()
 	}
 }
