@@ -53,7 +53,7 @@ func (tx *Transaction) SetID() {
 	tx.ID = hash[:]
 }
 
-func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction {
+func NewTransaction(from, to string, amount int, u *UTXOSet) *Transaction {
 	var inputs []TxInput
 	var outputs []TxOutput
 
@@ -62,7 +62,7 @@ func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction
 	w := wallets.GetWallet(from)
 	pubKeyHash := wallet.PublicKeyHash(w.PublicKey)
 
-	acc, validOutputs := chain.FindSpendableOutputs(pubKeyHash, amount)
+	acc, validOutputs := u.FindSpendableOutputs(pubKeyHash, amount)
 
 	if acc < amount {
 		log.Panic("Error: not enough funds")
@@ -80,12 +80,12 @@ func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction
 	outputs = append(outputs, *NewTXOutput(amount, to))
 
 	if acc > amount {
-		outputs = append(outputs, *NewTXOutput(acc - amount, from))
+		outputs = append(outputs, *NewTXOutput(acc-amount, from))
 	}
 
 	tx := Transaction{nil, inputs, outputs}
 	tx.ID = tx.Hash()
-	chain.SignTransaction(&tx, w.PrivateKey)
+	u.Blockchain.SignTransaction(&tx, w.PrivateKey)
 
 	return &tx
 }
@@ -114,7 +114,7 @@ func (tx *Transaction) TrimmedCopy() Transaction {
 	for _, in := range tx.Inputs {
 		inputs = append(inputs, TxInput{in.ID, in.Out, nil, nil})
 	}
-	
+
 	for _, out := range tx.Outputs {
 		outputs = append(outputs, TxOutput{out.Value, out.PubKeyHash})
 	}
@@ -136,7 +136,7 @@ func (tx *Transaction) Verify(prevTxs map[string]Transaction) bool {
 
 	txCopy := tx.TrimmedCopy()
 	curve := elliptic.P256()
-	
+
 	for inID, in := range txCopy.Inputs {
 		prevTx := prevTxs[hex.EncodeToString(in.ID)]
 		txCopy.Inputs[inID].Signature = nil
@@ -162,7 +162,7 @@ func (tx *Transaction) Verify(prevTxs map[string]Transaction) bool {
 		}
 	}
 
-	return true 
+	return true
 }
 
 func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTxs map[string]Transaction) {
